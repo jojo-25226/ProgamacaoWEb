@@ -27,5 +27,44 @@ export async function login(req, res) {
         { expiresIn: "1h" }
     );
 
-    res.json({ token });
+    // Envia o token e o objeto user que o teu frontend precisa
+    res.json({
+        token,
+        user: {
+            email: user.email,
+            username: user.email.split('@')[0] // Truque temporário já que a BD só tem email
+        }
+    });
+}
+
+export async function register(req, res) {
+    try {
+        // 1. Recebe também o username enviado pelo React
+        const { username, email, password } = req.body;
+
+        if (!email || !password) {
+            return res.status(400).json({ message: "Email e password são obrigatórios." });
+        }
+
+        // 2. Cria o hash da password
+        const password_hash = await bcrypt.hash(password, 10);
+
+        // 3. Insere na BD (Ajusta as colunas se a tua tabela tiver nomes diferentes!)
+        // Se a tua tabela NÃO tiver coluna username, remove o 'username' e o primeiro '?'
+        await db.query(
+            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
+            [username, email, password_hash]
+        );
+
+        return res.json({ message: "Utilizador registado com sucesso" });
+
+    } catch (error) {
+        // Isto vai fazer o erro real aparecer no terminal do teu VS Code/Node!
+        console.error("Erro detalhado no registo:", error);
+
+        return res.status(500).json({
+            message: "Erro interno no servidor",
+            error: error.message
+        });
+    }
 }

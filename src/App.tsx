@@ -1,7 +1,7 @@
 
 
 import './App.css'
-import Header from './Componentes/Header/index.tsx';
+/*import Header from './Componentes/Header/index.tsx';
 
 function App() {
 
@@ -14,4 +14,15 @@ function App() {
   )
 }
 
-export default App
+export default App*/
+import RegisterAndLogin from './Pages/Register.tsx';
+
+function App() {
+    return (
+        <div className="app-container">
+            <RegisterAndLogin />
+        </div>
+    );
+}
+
+export default App;
