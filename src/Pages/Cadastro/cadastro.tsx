@@ -50,7 +50,7 @@ export function CriarConta() {
           <form onSubmit={handleSubmit}>
             <div className="row">
               <input type="text" placeholder="Nome" required />
-              <input type="text" placeholder="Sobrenome" required />
+              <input type="text" placeholder="Apelido" required />
             </div>
 
             <input type="email" placeholder="Número ou email" required />
@@ -80,7 +80,7 @@ export function CriarConta() {
               </div>
             </div>
 
-            <button type="submit" className="btn-submit">Registra-se</button>
+            <button type="submit" className="btn-submit">Registar</button>
 
             <div className="login-link">
               <a href="#">Já tem uma conta?</a>
