@@ -15,7 +15,7 @@ function App() {
 }
 
 export default App*/
-import RegisterAndLogin from './test/Register.tsx';
+import RegisterAndLogin from './test/RegisterAndLogin.tsx';
 
 function App() {
     return (
