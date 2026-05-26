@@ -40,9 +40,9 @@ export async function login(req, res) {
 export async function register(req, res) {
     try {
         // 1. Recebe também o username enviado pelo React
-        const { username, email, password } = req.body;
+        const { username, email, password, birthDate, gender } = req.body;
 
-        if (!email || !password) {
+        if (!email || !password || !birthDate || !gender) {
             return res.status(400).json({ message: "Email e password são obrigatórios." });
         }
 
@@ -52,8 +52,8 @@ export async function register(req, res) {
         // 3. Insere na BD (Ajusta as colunas se a tua tabela tiver nomes diferentes!)
         // Se a tua tabela NÃO tiver coluna username, remove o 'username' e o primeiro '?'
         await db.query(
-            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            [username, email, password_hash]
+            "INSERT INTO users (username, email, password_hash, birthDate, gender) VALUES (?, ?, ?, ?, ?)",
+            [username, email, password_hash, birthDate, gender]
         );
 
         return res.json({ message: "Utilizador registado com sucesso" });
