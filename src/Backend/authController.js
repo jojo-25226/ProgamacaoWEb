@@ -6,7 +6,7 @@ export async function login(req, res) {
     const { email, password } = req.body;
 
     const [rows] = await db.query(
-        "SELECT id, email, password_hash FROM users WHERE email = ?",
+        "SELECT id, username, email, password_hash FROM users WHERE email = ?",
         [email]
     );
 
@@ -32,7 +32,7 @@ export async function login(req, res) {
         token,
         user: {
             email: user.email,
-            username: user.email.split('@')[0] // Truque temporário já que a BD só tem email
+            username: user.username
         }
     });
 }

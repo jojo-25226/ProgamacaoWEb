@@ -1,15 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import App from "./App.tsx";
-import Login from "./Pages/Login.tsx";
-import Register from "./Pages/Register.tsx";
+import RegisterAndLogin from "./Pages/RegisterAndLogin.tsx";
+import Home from "./Pages/Home.tsx";
 
 function RoutesApp() {
   return (
     <BrowserRouter>
       <Routes>
-          <Route path="/" element={<App />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<RegisterAndLogin />} />
       </Routes>
     </BrowserRouter>
   )

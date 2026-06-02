@@ -1,7 +1,10 @@
 import React, {useState} from 'react';
 import '../Componentes/index.css';
+import {useNavigate} from "react-router-dom";
 
-export function Register() {
+export function RegisterAndLogin() {
+    const navigate = useNavigate();
+
     // Estado para controlar o modo de login/registo
     const [isLogin, setIsLogin] = useState(true);
 
@@ -67,12 +70,10 @@ export function Register() {
                     localStorage.setItem('token', data.token);
                     alert(`Bem-vindo, ${data.user.username}!`);
 
-                    // Aqui podes redirecionar o utilizador ou limpar o formulário
+                    navigate("/");
                 } else {
                     alert('Conta criada com sucesso! Já pode iniciar sessão.');
                     setIsLogin(true);
-
-                    // Aqui podes redirecionar o utilizador ou limpar o formulário
                 }
             } else {
                 // Mostra o erro real enviado pelo backend (ex: "Email já existe" ou erros de validação)
@@ -228,4 +229,4 @@ export function Register() {
     );
 }
 
-export default Register;
+export default RegisterAndLogin;
