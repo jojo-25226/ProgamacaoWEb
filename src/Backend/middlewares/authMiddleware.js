@@ -16,6 +16,7 @@ export function authMiddleware(req, res, next) {
     try {
         const decoded = jwt.verify(token, "CHAVE_SUPER_SECRETA");
         req.user = decoded;
+        req.userId = decoded.userId;
         next();
     } catch (err) {
         return res.status(401).json({ message: "Token inválido ou expirado" });

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import '../Componentes/index.css';
+import '../../Componentes/index.css';
 
 export function CriarConta() {
   useEffect(() => {

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import '../Componentes/index.css';
+import '../../Componentes/index.css';
 import {useNavigate} from "react-router-dom";
 
 export function RegisterAndLogin() {
@@ -70,7 +70,8 @@ export function RegisterAndLogin() {
                     localStorage.setItem('token', data.token);
                     alert(`Bem-vindo, ${data.user.username}!`);
 
-                    navigate("/");
+                    localStorage.setItem("user", JSON.stringify(data.user));
+                    navigate("/feed");
                 } else {
                     alert('Conta criada com sucesso! Já pode iniciar sessão.');
                     setIsLogin(true);

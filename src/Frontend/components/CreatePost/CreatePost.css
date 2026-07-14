@@ -1,0 +1,30 @@
+.create-post{
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.create-post textarea{
+    resize: none;
+    border: none;
+    outline: none;
+    min-height: 80px;
+    font-size: 16px;
+}
+
+.create-post button{
+    background: #1877f2;
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}

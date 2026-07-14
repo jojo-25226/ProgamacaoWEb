@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import RegisterAndLogin from "./Pages/RegisterAndLogin.tsx";
 import Home from "./Pages/Home.tsx";
+import Feed from "./Pages/Feed.jsx";
+import Profile from "./Pages/Profile.jsx";
 
 function RoutesApp() {
   return (
@@ -8,6 +10,9 @@ function RoutesApp() {
       <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<RegisterAndLogin />} />
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/profile/:id" element={<Profile />} />
+
       </Routes>
     </BrowserRouter>
   )

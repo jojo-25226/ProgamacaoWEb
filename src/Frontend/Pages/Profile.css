@@ -1,0 +1,222 @@
+/* PÁGINA DE PERFIL */
+.profile-page {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* NAVBAR */
+.navbar {
+  width: 100%;
+  height: 60px;
+  background: #1877f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar .logo {
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.navbar .nav-icons {
+  display: flex;
+  gap: 20px;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.navbar .nav-icons span:hover {
+  transform: scale(1.15);
+}
+
+/* LOADING */
+.profile-loading {
+  text-align: center;
+  padding: 80px;
+  font-size: 16px;
+  color: #999;
+}
+
+/* CONTAINER PRINCIPAL */
+.profile-container {
+  max-width: 800px;
+  margin: 24px auto;
+  padding: 0 16px;
+}
+
+/* CAPA DO PERFIL */
+.profile-cover {
+  background: linear-gradient(135deg, #1877f2, #42a5f5);
+  border-radius: 12px 12px 0 0;
+  height: 180px;
+  position: relative;
+  margin-bottom: 60px;
+}
+
+.profile-cover .profile-avatar-wrap {
+  position: absolute;
+  bottom: -50px;
+  left: 30px;
+}
+
+.profile-cover .profile-avatar-big {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.profile-cover .change-avatar-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* INFORMAÇÕES DO PERFIL */
+.profile-info {
+  background: white;
+  border-radius: 0 0 12px 12px;
+  padding: 20px 30px 24px;
+  margin-bottom: 16px;
+  border: 0.5px solid #e4e6ea;
+}
+
+.profile-info .profile-name-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+
+.profile-info .profile-name-row h2 {
+  font-size: 24px;
+  color: #1c1e21;
+}
+
+.profile-info .friend-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #1877f2;
+  color: white;
+  transition: 0.15s;
+}
+
+.profile-info .friend-btn:hover:not(:disabled) {
+  background: #166fe5;
+}
+
+.profile-info .friend-btn.pending,
+.profile-info .friend-btn.friends {
+  background: #e4e6ea;
+  color: #606770;
+}
+
+.profile-info .profile-stats {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 12px;
+  font-size: 15px;
+  color: #606770;
+}
+
+.profile-info .profile-stats strong {
+  color: #1c1e21;
+}
+
+.profile-info .bio-text {
+  font-size: 15px;
+  color: #444;
+  line-height: 1.5;
+  min-height: 24px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.profile-info .bio-text:hover {
+  background: #f7f8fa;
+}
+
+.profile-info .bio-edit textarea {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid #e4e6ea;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 15px;
+  outline: none;
+  resize: none;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.profile-info .bio-edit textarea:focus {
+  border-color: #1877f2;
+}
+
+.profile-info .bio-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.profile-info .btn-save {
+  background: #1877f2;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.profile-info .btn-cancel {
+  background: #e4e6ea;
+  color: #444;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 16px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* POSTS DO PERFIL */
+.profile-posts h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c1e21;
+  margin-bottom: 14px;
+}
+
+.profile-posts .no-posts {
+  color: #999;
+  font-size: 15px;
+}
+
+.profile-posts .posts-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

@@ -1,12 +1,12 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
-import { db } from "./db.js";
+import { db } from "../config/db.js";
 
 export async function login(req, res) {
     const { email, password } = req.body;
 
     const [rows] = await db.query(
-        "SELECT id, username, email, password_hash FROM users WHERE email = ?",
+        "SELECT id, username, email, password_hash, pfp FROM users WHERE email = ?",
         [email]
     );
 
@@ -31,8 +31,11 @@ export async function login(req, res) {
     res.json({
         token,
         user: {
+            id: user.id,
             email: user.email,
-            username: user.username
+            username: user.username,
+            name: user.username,
+            avatar: user.pfp,
         }
     });
 }
