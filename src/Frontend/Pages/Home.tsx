@@ -10,6 +10,9 @@ export default function Home() {
         if (!token) {
             navigate("/login");
         }
+        else {
+            navigate("/feed");
+        }
     }, []);
 
     return (

@@ -1,7 +1,7 @@
 import {db} from "../config/db.js";
 
 // Formata os dados MySQL no formato que o frontend espera
-function formatPost(row, currentUserId) {
+function formatPost(row) {
     return {
         id: row.id,
         content: row.content,
@@ -16,9 +16,9 @@ function formatPost(row, currentUserId) {
             name: row.username,
             avatar: row.pfp,
         },
-        likesCount: 0,
-        commentsCount: 0,
-        likedByUser: false,
+        likesCount: Number(row.likesCount ?? 0),
+        commentsCount: Number(row.commentsCount ?? 0),
+        likedByUser: Boolean(row.likedByUser),
     };
 }
 
@@ -66,11 +66,29 @@ export async function getFeed(req, res) {
                    posts.createdAt,
                    posts.userId,
                    users.username,
-                   users.pfp
+                   users.pfp,
+                   (
+                    SELECT COUNT(*)
+                       FROM likes
+                       WHERE likes.postId = posts.id
+                   ) AS likesCount,
+
+                   (
+                       SELECT COUNT(*)
+                       FROM comments
+                       WHERE comments.postId = posts.id
+                   ) AS commentsCount,
+
+                   EXISTS(
+                       SELECT 1
+                       FROM likes
+                       WHERE likes.postId = posts.id
+                         AND likes.userId = ?
+                   ) AS likedByUser
             FROM posts
                      INNER JOIN users ON users.id = posts.userId
             ORDER BY posts.createdAt DESC
-        `);
+        `, [req.userId]);
 
         return res.json(rows.map((post) => formatPost(post, req.userId)));
     } catch (error) {

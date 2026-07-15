@@ -87,18 +87,14 @@ function Feed() {
   }
 
   async function handleAccept(id) {
-    try {
-      await api.patch("/friends/accept/" + id);
-      setReceivedRequests((p) => p.filter((r) => r.id !== id));
-      loadFriends();
-    } catch (err) { console.error(err); }
+    await api.patch("/friends/accept/" + id);
+    setReceivedRequests((p) => p.filter((r) => r.id !== id));
+    loadFriends();
   }
 
   async function handleReject(id) {
-    try {
-      await api.patch("/friends/reject/" + id);
-      setReceivedRequests((p) => p.filter((r) => r.id !== id));
-    } catch (err) { console.error(err); }
+    await api.patch("/friends/reject/" + id);
+    setReceivedRequests((p) => p.filter((r) => r.id !== id));
   }
 
   async function handleSearch(e) {

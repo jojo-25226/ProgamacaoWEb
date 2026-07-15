@@ -1,248 +1,207 @@
-import prisma from "../config/db.js";
+import {db} from "../config/db.js";
 
-// Enviar pedido de amizade
-export const sendFriendRequest = async (req, res) => {
-  try {
-    const senderId = req.userId;
-    const { receiverId } = req.body;
+export async function sendFriendRequest(req, res) {
+    try {
+        const senderId = req.userId;
+        const receiverId = Number(req.body.receiverId);
 
-    // Validar receiverId
-    if (!receiverId) {
-      return res.status(400).json({
-        message: "receiverId é obrigatório"
-      });
+        if (!Number.isInteger(receiverId)) {
+            return res.status(400).json({message: "receiverId é obrigatório"});
+        }
+
+        if (senderId === receiverId) {
+            return res.status(400).json({message: "Não podes adicionar-te a ti próprio"});
+        }
+
+        const [users] = await db.query(
+            "SELECT id FROM users WHERE id = ?",
+            [receiverId]
+        );
+
+        if (users.length === 0) {
+            return res.status(404).json({message: "Utilizador não encontrado"});
+        }
+
+        const [existing] = await db.query(`
+            SELECT senderId, receiverId
+            FROM friendRequests
+            WHERE (senderId = ? AND receiverId = ?)
+               OR (senderId = ? AND receiverId = ?)
+        `, [senderId, receiverId, receiverId, senderId]);
+
+        if (existing.length > 0) {
+            return res.status(400).json({message: "Já existe um pedido ou amizade"});
+        }
+
+        const [result] = await db.query(`
+            INSERT INTO friendRequests (senderId, receiverId, status)
+            VALUES (?, ?, 'Pending')
+        `, [senderId, receiverId]);
+
+        return res.status(201).json({
+            id: result.insertId,
+            senderId,
+            receiverId,
+            status: "Pending",
+        });
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+async function updateRequestStatus(req, res, status) {
+    const id = Number(req.params.id);
+
+    const [result] = await db.query(`
+        UPDATE friendRequests
+        SET status = ?
+        WHERE id = ?
+          AND receiverId = ?
+          AND status = 'Pending'
+    `, [status, id, req.userId]);
+
+    if (result.affectedRows === 0) {
+        return res.status(404).json({message: "Pedido não encontrado"});
     }
 
-    // Não pode adicionar a si mesmo
-    if (senderId === receiverId) {
-      return res.status(400).json({
-        message: "Você não pode adicionar você mesmo"
-      });
+    return res.json({id, status});
+}
+
+export async function acceptFriendRequest(req, res) {
+    try {
+        return await updateRequestStatus(req, res, "Accepted");
+    } catch (error) {
+        return res.status(500).json({message: error.message});
     }
+}
 
-    // Verificar se utilizador existe
-    const receiver = await prisma.user.findUnique({
-      where: { id: receiverId }
-    });
-
-    if (!receiver) {
-      return res.status(404).json({
-        message: "Utilizador não encontrado"
-      });
+export async function rejectFriendRequest(req, res) {
+    try {
+        return await updateRequestStatus(req, res, "Declined");
+    } catch (error) {
+        return res.status(500).json({message: error.message});
     }
+}
 
-    // Verificar se já existe pedido
-    const existingRequest =
-      await prisma.friendRequest.findFirst({
-        where: {
-          senderId,
-          receiverId
-        }
-      });
+export async function getReceivedRequests(req, res) {
+    try {
+        const [rows] = await db.query(`
+            SELECT fr.id,
+                   fr.senderId,
+                   fr.receiverId,
+                   fr.status,
+                   fr.createdAt,
+                   users.id       AS senderUserId,
+                   users.username AS senderName,
+                   users.pfp      AS senderAvatar
+            FROM friendRequests fr
+                     INNER JOIN users ON users.id = fr.senderId
+            WHERE fr.receiverId = ?
+              AND fr.status = 'Pending'
+        `, [req.userId]);
 
-    if (existingRequest) {
-      return res.status(400).json({
-        message: "Pedido já enviado"
-      });
-    }
+        return res.json(rows.map((row) => ({
+            id: row.id,
+            senderId: row.senderId,
+            receiverId: row.receiverId,
+            status: row.status,
+            createdAt: row.createdAt,
 
-    // Criar pedido
-    const request =
-      await prisma.friendRequest.create({
-        data: {
-          senderId,
-          receiverId
-        }
-      });
-
-    res.status(201).json(request);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-// Aceitar pedido
-export const acceptFriendRequest = async (req, res) => {
-  try {
-    const requestId = Number(req.params.id);
-
-    const request =
-      await prisma.friendRequest.update({
-        where: {
-          id: requestId
-        },
-        data: {
-          status: "ACCEPTED"
-        }
-      });
-
-    res.json(request);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-// Rejeitar pedido
-export const rejectFriendRequest = async (req, res) => {
-  try {
-    const requestId = Number(req.params.id);
-
-    const request =
-      await prisma.friendRequest.update({
-        where: {
-          id: requestId
-        },
-        data: {
-          status: "REJECTED"
-        }
-      });
-
-    res.json(request);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-// Buscar pedidos recebidos
-export const getReceivedRequests = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    const requests =
-      await prisma.friendRequest.findMany({
-        where: {
-          receiverId: userId,
-          status: "PENDING"
-        },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc"
-        }
-      });
-
-    res.json(requests);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-// Buscar pedidos enviados
-export const getSentRequests = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    const requests =
-      await prisma.friendRequest.findMany({
-        where: {
-          senderId: userId
-        },
-        include: {
-          receiver: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
-            }
-          }
-        },
-        orderBy: {
-          createdAt: "desc"
-        }
-      });
-
-    res.json(requests);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-// Buscar amigos aceites
-export const getFriends = async (req, res) => {
-  try {
-    const userId = req.userId;
-
-    const friends =
-      await prisma.friendRequest.findMany({
-        where: {
-          OR: [
-            {
-              senderId: userId,
-              status: "ACCEPTED"
+            sender: {
+                id: row.senderId,
+                name: row.senderName,
+                avatar: row.senderAvatar,
             },
-            {
-              receiverId: userId,
-              status: "ACCEPTED"
-            }
-          ]
-        },
-        include: {
-          sender: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
-            }
-          },
-          receiver: {
-            select: {
-              id: true,
-              name: true,
-              avatar: true
-            }
-          }
+        })));
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+export async function getSentRequests(req, res) {
+    try {
+        const [rows] = await db.query(`
+            SELECT fr.id,
+                   fr.senderId,
+                   fr.receiverId,
+                   fr.status,
+                   fr.createdAt,
+                   users.id       AS receiverUserId,
+                   users.username AS receiverName,
+                   users.pfp      AS receiverAvatar
+            FROM friendRequests fr
+                     INNER JOIN users ON users.id = fr.receiverId
+            WHERE fr.senderId = ?
+        `, [req.userId]);
+
+        return res.json(rows.map((row) => ({
+            id: row.id,
+            senderId: row.senderId,
+            receiverId: row.receiverId,
+            status: row.status,
+            createdAt: row.createdAt,
+            receiver: {
+                id: row.receiverUserId,
+                name: row.receiverName,
+                avatar: row.receiverAvatar,
+            },
+        })));
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+export async function getFriends(req, res) {
+    try {
+        const [rows] = await db.query(`
+            SELECT fr.senderId,
+                   fr.receiverId,
+                   sender.username   AS senderName,
+                   sender.pfp        AS senderAvatar,
+                   receiver.username AS receiverName,
+                   receiver.pfp      AS receiverAvatar
+            FROM friendRequests fr
+                     INNER JOIN users sender ON sender.id = fr.senderId
+                     INNER JOIN users receiver ON receiver.id = fr.receiverId
+            WHERE (fr.senderId = ? OR fr.receiverId = ?)
+              AND fr.status = 'Accepted'
+        `, [req.userId, req.userId]);
+
+        return res.json(rows.map((row) => ({
+            senderId: row.senderId,
+            receiverId: row.receiverId,
+            sender: {
+                id: row.senderId,
+                name: row.senderName,
+                avatar: row.senderAvatar,
+            },
+            receiver: {
+                id: row.receiverId,
+                name: row.receiverName,
+                avatar: row.receiverAvatar,
+            },
+        })));
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+export async function deleteFriendRequest(req, res) {
+    try {
+        const id = Number(req.params.id);
+
+        const [result] = await db.query(`
+            DELETE FROM friendRequests
+            WHERE id = ?
+              AND (senderId = ? OR receiverId = ?)
+        `, [id, req.userId, req.userId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Pedido não encontrado" });
         }
-      });
 
-    res.json(friends);
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
-
-// Cancelar/remover pedido
-export const deleteFriendRequest = async (req, res) => {
-  try {
-    const requestId = Number(req.params.id);
-
-    await prisma.friendRequest.delete({
-      where: {
-        id: requestId
-      }
-    });
-
-    res.json({
-      message: "Pedido removido"
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      message: error.message
-    });
-  }
-};
+        return res.json({ message: "Pedido removido" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}

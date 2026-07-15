@@ -16,13 +16,13 @@ CREATE TABLE users (
 );
 
 CREATE TABLE friendRequests (
+	id INT auto_increment primary key,
     senderId INT
 		REFERENCES users(id) ON DELETE CASCADE,
     receiverId INT
 		REFERENCES users(id) ON DELETE CASCADE,
 	status ENUM('Accepted', 'Declined', 'Pending') default 'Pending',
-        
-	PRIMARY KEY(senderId, receiverId),
+    createdAt timestamp default current_timestamp,
     
     -- Impede auto-amizade
     CONSTRAINT no_self_friendship CHECK (senderId <> receiverId),
