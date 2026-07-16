@@ -4,6 +4,7 @@
   border-radius: 12px;
   padding: 18px;
   border: 0.5px solid #e4e6ea;
+  text-align: left;
 }
 
 /* HEADER */
@@ -39,16 +40,20 @@
 }
 
 .post-card .btn-delete-post {
-  background: none;
+  background: #f0f2f5;
   border: none;
+  border-radius: 50%;
+  color: #606770;
   cursor: pointer;
-  font-size: 16px;
-  opacity: 0.45;
+  font-size: 20px;
+  padding: 5px 11px;
   transition: 0.2s;
+  text-align: center;
 }
 
 .post-card .btn-delete-post:hover {
-  opacity: 1;
+  background: #ffe5e5;
+  color: #d93025;
 }
 
 /* CONTENT */
@@ -150,7 +155,6 @@
 
 .post-card .comment-form input:focus {
   border-color: #1877f2;
-  background: white;
 }
 
 .post-card .comment-form button {
@@ -211,4 +215,10 @@
   font-size: 14px;
   color: #444;
   margin: 0;
+}
+
+.post-card .comments-section,
+.post-card .comment-form input,
+.post-card .comment-bubble {
+  text-align: left;
 }

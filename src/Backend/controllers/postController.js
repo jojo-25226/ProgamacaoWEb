@@ -57,6 +57,53 @@ export async function createPost(req, res) {
     }
 }
 
+export async function deletePost(req, res) {
+    let connection;
+
+    try {
+        const postId = Number(req.params.id);
+
+        if (!Number.isInteger(postId)) {
+            return res.status(400).json({message: "ID de post invalido"});
+        }
+
+        connection = await db.getConnection();
+        const [posts] = await connection.query(
+            "SELECT userId FROM posts WHERE id = ?",
+            [postId]
+        );
+
+        if (posts.length === 0) {
+            return res.status(404).json({message: "Post nao encontrado"});
+        }
+
+        // Só o autor pode apagar o seu próprio post.
+        if (posts[0].userId !== req.userId) {
+            return res.status(403).json({message: "Sem permissao para apagar este post"});
+        }
+
+        await connection.beginTransaction();
+
+        // Remove likes e comentários antes de apagar o post.
+        await connection.query("DELETE FROM likes WHERE postId = ?", [postId]);
+        await connection.query("DELETE FROM comments WHERE postId = ?", [postId]);
+        await connection.query("DELETE FROM posts WHERE id = ?", [postId]);
+
+        await connection.commit();
+        return res.json({message: "Post apagado"});
+    } catch (error) {
+        if (connection) {
+            await connection.rollback();
+        }
+
+        return res.status(500).json({message: error.message});
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+    }
+}
+
 export async function getFeed(req, res) {
     try {
         const [rows] = await db.query(`

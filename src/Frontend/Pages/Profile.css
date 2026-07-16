@@ -126,6 +126,7 @@
 
 .profile-info .friend-btn:hover:not(:disabled) {
   background: #166fe5;
+  color: white;
 }
 
 .profile-info .friend-btn.pending,

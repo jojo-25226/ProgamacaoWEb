@@ -23,11 +23,17 @@ export async function sendFriendRequest(req, res) {
         }
 
         const [existing] = await db.query(`
-            SELECT senderId, receiverId
+            SELECT id, status
             FROM friendRequests
             WHERE (senderId = ? AND receiverId = ?)
                OR (senderId = ? AND receiverId = ?)
         `, [senderId, receiverId, receiverId, senderId]);
+
+        // Um pedido antes rejeitado pode ser enviado novamente.
+        if (existing.length > 0 && existing[0].status === "Declined") {
+            await db.query("DELETE FROM friendRequests WHERE id = ?", [existing[0].id]);
+            existing.length = 0;
+        }
 
         if (existing.length > 0) {
             return res.status(400).json({message: "Já existe um pedido ou amizade"});
@@ -77,7 +83,21 @@ export async function acceptFriendRequest(req, res) {
 
 export async function rejectFriendRequest(req, res) {
     try {
-        return await updateRequestStatus(req, res, "Declined");
+        const id = Number(req.params.id);
+
+        // Rejeitar remove o pedido para permitir um novo convite no futuro.
+        const [result] = await db.query(`
+            DELETE FROM friendRequests
+            WHERE id = ?
+              AND receiverId = ?
+              AND status = 'Pending'
+        `, [id, req.userId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({message: "Pedido nao encontrado"});
+        }
+
+        return res.json({message: "Pedido rejeitado"});
     } catch (error) {
         return res.status(500).json({message: error.message});
     }
@@ -154,7 +174,8 @@ export async function getSentRequests(req, res) {
 export async function getFriends(req, res) {
     try {
         const [rows] = await db.query(`
-            SELECT fr.senderId,
+            SELECT fr.id,
+                   fr.senderId,
                    fr.receiverId,
                    sender.username   AS senderName,
                    sender.pfp        AS senderAvatar,
@@ -168,6 +189,7 @@ export async function getFriends(req, res) {
         `, [req.userId, req.userId]);
 
         return res.json(rows.map((row) => ({
+            id: row.id,
             senderId: row.senderId,
             receiverId: row.receiverId,
             sender: {

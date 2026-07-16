@@ -5,6 +5,7 @@ import postRoutes from "./routes/postRoutes.js";
 import commentRoutes from "./routes/commentRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import friendRoutes from "./routes/friendRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api/comments", commentRoutes);
 
 app.use("/api/users", userRoutes);
 app.use("/api/friends", friendRoutes);
+app.use("/api/messages", messageRoutes);
 
 
 export default app;

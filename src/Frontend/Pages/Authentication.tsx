@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
-import '../../Componentes/index.css';
 import {useNavigate} from "react-router-dom";
+import './Authentication.css';
 
-export function RegisterAndLogin() {
+export function Authentication() {
     const navigate = useNavigate();
 
     // Estado para controlar o modo de login/registo
@@ -230,4 +230,4 @@ export function RegisterAndLogin() {
     );
 }
 
-export default RegisterAndLogin;
+export default Authentication;

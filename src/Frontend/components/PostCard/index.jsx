@@ -95,7 +95,13 @@ function PostCard({ post, currentUserId, onDelete }) {
         />
         <div className="post-meta">
           <h4>{author?.name}</h4>
-          <span>{new Date(post.createdAt).toLocaleString("pt-PT")}</span>
+          <span>{new Date(post.createdAt).toLocaleString("pt-PT", {
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          })}</span>
         </div>
         {author?.id === currentUserId && (
           <button className="btn-delete-post" onClick={handleDelete} title="Apagar">🗑</button>

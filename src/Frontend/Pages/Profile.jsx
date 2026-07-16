@@ -17,6 +17,7 @@ function Profile() {
   const [editingBio, setEditingBio] = useState(false);
   const [bio, setBio] = useState("");
   const [friendStatus, setFriendStatus] = useState(null); // null | "pending" | "friends"
+  const [friendshipId, setFriendshipId] = useState(null);
   const fileRef = useRef();
 
   async function loadProfile() {
@@ -42,16 +43,21 @@ function Profile() {
       const received = await api.get("/friends/received");
       const friends = await api.get("/friends/list");
 
-      const isFriend = friends.data.some(
+      const friendship = friends.data.find(
         (r) => r.senderId === Number(id) || r.receiverId === Number(id)
       );
-      if (isFriend) { setFriendStatus("friends"); return; }
+      if (friendship) {
+        setFriendStatus("friends");
+        setFriendshipId(friendship.id);
+        return;
+      }
 
       const isPending = sent.data.some((r) => r.receiverId === Number(id)) ||
         received.data.some((r) => r.senderId === Number(id));
       if (isPending) { setFriendStatus("pending"); return; }
 
       setFriendStatus(null);
+      setFriendshipId(null);
     } catch (err) { console.error(err); }
   }
 
@@ -90,6 +96,19 @@ function Profile() {
     }
   }
 
+  async function handleRemoveFriend() {
+    if (!friendshipId) return;
+    if (!window.confirm("Queres remover esta amizade?")) return;
+
+    try {
+      await api.delete("/friends/" + friendshipId);
+      setFriendStatus(null);
+      setFriendshipId(null);
+    } catch (err) {
+      alert(err.response?.data?.message ?? "Nao foi possivel remover a amizade");
+    }
+  }
+
   if (!profile) return <div className="profile-loading">A carregar...</div>;
 
   return (
@@ -123,10 +142,10 @@ function Profile() {
             {!isMe && (
               <button
                 className={"friend-btn " + (friendStatus ?? "")}
-                onClick={friendStatus ? undefined : handleAddFriend}
-                disabled={friendStatus === "pending" || friendStatus === "friends"}
+                onClick={friendStatus === "friends" ? handleRemoveFriend : friendStatus ? undefined : handleAddFriend}
+                disabled={friendStatus === "pending"}
               >
-                {friendStatus === "friends" ? "✓ Amigos" : friendStatus === "pending" ? "Pedido enviado" : "+ Adicionar amigo"}
+                {friendStatus === "friends" ? "Remover amizade" : friendStatus === "pending" ? "Pedido enviado" : "+ Adicionar amigo"}
               </button>
             )}
           </div>
@@ -157,7 +176,12 @@ function Profile() {
           {profile.posts?.length === 0 && <p className="no-posts">Ainda não há posts.</p>}
           <div className="posts-grid">
             {profile.posts?.map((post) => (
-              <PostCard key={post.id} post={post} loadPosts={loadProfile} />
+              <PostCard
+                key={post.id}
+                post={post}
+                currentUserId={currentUser?.id}
+                onDelete={loadProfile}
+              />
             ))}
           </div>
         </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
-import socket from "../services/socket";
+import socket from "../services/socket.js";
 import PostCard from "../components/PostCard";
 import Chat from "../components/Chat";
 import "./Feed.css";
