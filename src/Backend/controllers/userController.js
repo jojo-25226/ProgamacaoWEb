@@ -1,25 +1,6 @@
 import {db} from "../config/db.js";
 
-async function canViewProfile(viewerId, profileUserId, visibility) {
-    if (viewerId === profileUserId || visibility === "Public") {
-        return true;
-    }
-
-    const [friendships] = await db.query(`
-    SELECT id
-    FROM friendRequests
-    WHERE status = 'Accepted'
-      AND (
-        (senderId = ? AND receiverId = ?)
-        OR
-        (senderId = ? AND receiverId = ?)
-      )
-    LIMIT 1
-  `, [viewerId, profileUserId, profileUserId, viewerId]);
-
-    return friendships.length > 0;
-}
-
+// Devolve o perfil de um utilizador
 export async function getUserProfile(req, res) {
     try {
         const userId = Number(req.params.id);
@@ -101,27 +82,7 @@ export async function getUserProfile(req, res) {
     }
 }
 
-export async function updateProfileVisibility(req, res) {
-    try {
-        const profileVisibility = req.body.profileVisibility;
-
-        if (!["Public", "Friends"].includes(profileVisibility)) {
-            return res.status(400).json({
-                message: "A visibilidade deve ser Public ou Friends",
-            });
-        }
-
-        await db.query(
-            "UPDATE users SET profileVisibility = ? WHERE id = ?",
-            [profileVisibility, req.userId]
-        );
-
-        return res.json({ profileVisibility });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
-    }
-}
-
+// Atualiza a bio de um utilizador
 export async function updateBio(req, res) {
     try {
         const bio = req.body.bio?.trim();
@@ -141,6 +102,7 @@ export async function updateBio(req, res) {
     }
 }
 
+// Atualiza a foto de perfil de um utilizador
 export async function updateAvatar(req, res) {
     try {
         if (!req.file) {
@@ -158,6 +120,52 @@ export async function updateAvatar(req, res) {
     }
 }
 
+// Atualiza a visibilidade do perfil de um utilizador
+export async function updateProfileVisibility(req, res) {
+    try {
+        const profileVisibility = req.body.profileVisibility;
+
+        if (!["Public", "Friends"].includes(profileVisibility)) {
+            return res.status(400).json({
+                message: "A visibilidade deve ser Public ou Friends",
+            });
+        }
+
+        await db.query(
+            "UPDATE users SET profileVisibility = ? WHERE id = ?",
+            [profileVisibility, req.userId]
+        );
+
+        return res.json({profileVisibility});
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+// Verifica se um utilizador pode ver o perfil de outro utilizador
+async function canViewProfile(viewerId, profileUserId, visibility) {
+    // Perfil público
+    if (viewerId === profileUserId || visibility === "Public") {
+        return true;
+    }
+
+    // Só amigos
+    const [friendships] = await db.query(`
+        SELECT id
+        FROM friendRequests
+        WHERE status = 'Accepted'
+          AND (
+            (senderId = ? AND receiverId = ?)
+                OR
+            (senderId = ? AND receiverId = ?)
+            )
+            LIMIT 1
+    `, [viewerId, profileUserId, profileUserId, viewerId]);
+
+    return friendships.length > 0;
+}
+
+// Procura utilizadores pelo nome
 export async function searchUsers(req, res) {
     try {
         const query = req.query.q?.trim() ?? "";
@@ -173,7 +181,7 @@ export async function searchUsers(req, res) {
             FROM users
             WHERE username LIKE ?
               AND id != ?
-      LIMIT 10
+            LIMIT 10
         `, [`%${query}%`, req.userId]);
 
         return res.json(users);

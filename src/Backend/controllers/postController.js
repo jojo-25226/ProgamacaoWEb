@@ -22,6 +22,7 @@ function formatPost(row) {
     };
 }
 
+// Cria um post
 export async function createPost(req, res) {
     try {
         const content = req.body.content?.trim() ?? "";
@@ -50,7 +51,7 @@ export async function createPost(req, res) {
                    users.username,
                    users.pfp
             FROM posts
-                     INNER JOIN users ON users.id = posts.userId
+            INNER JOIN users ON users.id = posts.userId
             WHERE posts.id = ?
         `, [result.insertId]);
 
@@ -60,6 +61,7 @@ export async function createPost(req, res) {
     }
 }
 
+// Apaga um post
 export async function deletePost(req, res) {
     let connection;
 
@@ -107,6 +109,7 @@ export async function deletePost(req, res) {
     }
 }
 
+// Lista os posts do feed do utilizador autenticado
 export async function getFeed(req, res) {
     try {
         const [rows] = await db.query(`
@@ -118,46 +121,103 @@ export async function getFeed(req, res) {
                    posts.userId,
                    users.username,
                    users.pfp,
+
+                   -- Total de likes
                    (SELECT COUNT(*)
                     FROM likes
                     WHERE likes.postId = posts.id)    AS likesCount,
+
+                   -- Total de comentários
                    (SELECT COUNT(*)
                     FROM comments
                     WHERE comments.postId = posts.id) AS commentsCount,
+
+                   -- Estado do like
                    EXISTS(SELECT 1
                           FROM likes
                           WHERE likes.postId = posts.id
                             AND likes.userId = ?)     AS likedByUser
             FROM posts
-                     INNER JOIN users ON users.id = posts.userId
+            INNER JOIN users ON users.id = posts.userId
             WHERE
-               -- O autor vê sempre os próprios posts
+               -- Próprios posts
                 posts.userId = ?
-                
-               -- Posts públicos são visíveis para todos
+
+               -- Posts públicos
                OR posts.visibility = 'Public'
-                
-               -- Posts de amigos são visíveis apenas em amizades aceites
+
+               -- Posts de amigos
                OR (
                 posts.visibility = 'Friends'
                     AND EXISTS(SELECT 1
                                FROM friendRequests
                                WHERE status = 'Accepted'
                                  AND (
+                                   -- amizade (como receiver)
                                    (senderId = posts.userId AND receiverId = ?)
                                        OR
+                                       -- amizade (como sender)
                                    (receiverId = posts.userId AND senderId = ?)
                                    ))
                 )
             ORDER BY posts.createdAt DESC
-        `, [
-            req.userId, // likedByUser
-            req.userId, // posts próprios
-            req.userId, // amizade (utilizador atual como receiver)
-            req.userId, // amizade (utilizador atual como sender)
-        ]);
+        `, [ req.userId, req.userId, req.userId, req.userId ]);
 
         return res.json(rows.map(formatPost));
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+// Alterna o estado de like do post
+export async function toggleLike(req, res) {
+    try {
+        const userId = req.userId;
+        const postId = Number(req.params.id);
+
+        if (!Number.isInteger(postId)) {
+            return res.status(400).json({ message: "ID de post inválido" });
+        }
+
+        const [posts] = await db.query(
+            "SELECT id FROM posts WHERE id = ?",
+            [postId]
+        );
+
+        if (posts.length === 0) {
+            return res.status(404).json({ message: "Post não encontrado" });
+        }
+
+        const [existingLikes] = await db.query(
+            "SELECT id FROM likes WHERE userId = ? AND postId = ?",
+            [userId, postId]
+        );
+
+        let liked;
+
+        if (existingLikes.length > 0) {
+            await db.query(
+                "DELETE FROM likes WHERE userId = ? AND postId = ?",
+                [userId, postId]
+            );
+            liked = false;
+        } else {
+            await db.query(
+                "INSERT INTO likes (userId, postId) VALUES (?, ?)",
+                [userId, postId]
+            );
+            liked = true;
+        }
+
+        const [countRows] = await db.query(
+            "SELECT COUNT(*) AS likesCount FROM likes WHERE postId = ?",
+            [postId]
+        );
+
+        return res.json({
+            liked,
+            likesCount: countRows[0].likesCount,
+        });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }

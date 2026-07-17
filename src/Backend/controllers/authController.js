@@ -52,8 +52,7 @@ export async function register(req, res) {
         // 2. Cria o hash da password
         const password_hash = await bcrypt.hash(password, 10);
 
-        // 3. Insere na BD (Ajusta as colunas se a tua tabela tiver nomes diferentes!)
-        // Se a tua tabela NÃO tiver coluna username, remove o 'username' e o primeiro '?'
+        // 3. Insere na BD
         await db.query(
             "INSERT INTO users (username, email, password_hash, birthDate, gender) VALUES (?, ?, ?, ?, ?)",
             [username, email, password_hash, birthDate, gender]
@@ -62,7 +61,6 @@ export async function register(req, res) {
         return res.json({ message: "Utilizador registado com sucesso" });
 
     } catch (error) {
-        // Isto vai fazer o erro real aparecer no terminal do teu VS Code/Node!
         console.error("Erro detalhado no registo:", error);
 
         return res.status(500).json({

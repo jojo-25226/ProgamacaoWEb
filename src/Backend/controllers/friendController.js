@@ -55,6 +55,7 @@ export async function sendFriendRequest(req, res) {
     }
 }
 
+// Atualiza o estado do pedido de amizade na BD
 async function updateRequestStatus(req, res, status) {
     const id = Number(req.params.id);
 
@@ -73,6 +74,7 @@ async function updateRequestStatus(req, res, status) {
     return res.json({id, status});
 }
 
+// Adiciona o utilizador como amigo
 export async function acceptFriendRequest(req, res) {
     try {
         return await updateRequestStatus(req, res, "Accepted");
@@ -81,11 +83,11 @@ export async function acceptFriendRequest(req, res) {
     }
 }
 
+// Rejeitar remove o pedido para permitir um novo convite no futuro
 export async function rejectFriendRequest(req, res) {
     try {
         const id = Number(req.params.id);
 
-        // Rejeitar remove o pedido para permitir um novo convite no futuro.
         const [result] = await db.query(`
             DELETE FROM friendRequests
             WHERE id = ?
@@ -103,6 +105,28 @@ export async function rejectFriendRequest(req, res) {
     }
 }
 
+// Remove o pedido de amizade
+export async function deleteFriendRequest(req, res) {
+    try {
+        const id = Number(req.params.id);
+
+        const [result] = await db.query(`
+            DELETE FROM friendRequests
+            WHERE id = ?
+              AND (senderId = ? OR receiverId = ?)
+        `, [id, req.userId, req.userId]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ message: "Pedido não encontrado" });
+        }
+
+        return res.json({ message: "Pedido removido" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+// Procura pedidos de amizade pendentes
 export async function getReceivedRequests(req, res) {
     try {
         const [rows] = await db.query(`
@@ -138,6 +162,7 @@ export async function getReceivedRequests(req, res) {
     }
 }
 
+// Verifica os pedidos de amizade enviados
 export async function getSentRequests(req, res) {
     try {
         const [rows] = await db.query(`
@@ -170,6 +195,7 @@ export async function getSentRequests(req, res) {
         return res.status(500).json({message: error.message});
     }
 }
+
 
 export async function getFriends(req, res) {
     try {
@@ -205,25 +231,5 @@ export async function getFriends(req, res) {
         })));
     } catch (error) {
         return res.status(500).json({message: error.message});
-    }
-}
-
-export async function deleteFriendRequest(req, res) {
-    try {
-        const id = Number(req.params.id);
-
-        const [result] = await db.query(`
-            DELETE FROM friendRequests
-            WHERE id = ?
-              AND (senderId = ? OR receiverId = ?)
-        `, [id, req.userId, req.userId]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: "Pedido não encontrado" });
-        }
-
-        return res.json({ message: "Pedido removido" });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
     }
 }

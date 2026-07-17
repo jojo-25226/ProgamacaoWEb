@@ -100,7 +100,7 @@ export async function getCommentsByPost(req, res) {
   }
 }
 
-// Dá like se ainda não existir; retira se já existir.
+// Dá like se ainda não existir, retira se já existir
 export async function toggleCommentLike(req, res) {
     try {
         const commentId = Number(req.params.commentId);

@@ -5,10 +5,19 @@ import { getUserProfile, updateAvatar, updateBio, updateProfileVisibility, searc
 
 const router = Router();
 
-router.patch("/bio", authMiddleware, updateBio);
-router.patch("/avatar", authMiddleware, upload.single("avatar"), updateAvatar);
-router.get("/search", authMiddleware, searchUsers);
+// Obtem o perfil de um utilizador
 router.get("/:id/profile", authMiddleware, getUserProfile);
+
+// Atualiza a bio do utilizador
+router.patch("/bio", authMiddleware, updateBio);
+
+// Atualiza o avatar do utilizador
+router.patch("/avatar", authMiddleware, upload.single("avatar"), updateAvatar);
+
+// Atualiza a visibilidade do perfil do utilizador
 router.patch("/profile-visibility", authMiddleware, updateProfileVisibility);
+
+// Procura utilizadores
+router.get("/search", authMiddleware, searchUsers);
 
 export default router;

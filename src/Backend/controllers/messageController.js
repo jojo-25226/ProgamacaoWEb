@@ -1,6 +1,6 @@
 import {db} from "../config/db.js";
 
-// Confirma que os dois utilizadores são amigos
+// Verifica se dois utilizadores são amigos
 async function areFriends(userId, friendId) {
     const [rows] = await db.query(`
         SELECT id
