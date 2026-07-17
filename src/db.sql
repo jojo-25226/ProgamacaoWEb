@@ -12,7 +12,9 @@ CREATE TABLE users (
     gender nvarchar(3) not null default "N/D",
     pfp nvarchar(255) null,
     bio nvarchar(255) null,
-    createdAt timestamp default current_timestamp
+    createdAt timestamp default current_timestamp,
+    profileVisibility enum('Public', 'Friends') 
+		not null default 'Public'
 );
 
 CREATE TABLE friendRequests (
@@ -21,7 +23,8 @@ CREATE TABLE friendRequests (
 		REFERENCES users(id) ON DELETE CASCADE,
     receiverId INT
 		REFERENCES users(id) ON DELETE CASCADE,
-	status ENUM('Accepted', 'Declined', 'Pending') default 'Pending',
+	status ENUM('Accepted', 'Declined', 'Pending') 
+		default 'Pending',
     createdAt timestamp default current_timestamp,
     
     -- Impede auto-amizade
@@ -40,12 +43,14 @@ CREATE TABLE posts (
     image NVARCHAR(191) NULL,
     userId INTEGER NOT NULL
 		REFERENCES users(id) ON DELETE CASCADE,
-    createdAt timestamp default current_timestamp
+    createdAt timestamp default current_timestamp,
+	visibility enum('Public', 'Friends') 
+		not null default 'Public'
 );
 
 CREATE TABLE comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    content VARCHAR(191) NOT NULL,
+    content NVARCHAR(191) NOT NULL,
     userId INT NOT NULL
 		REFERENCES users(id) ON DELETE CASCADE,
     postId INT NOT NULL
@@ -60,6 +65,17 @@ CREATE TABLE likes (
     createdAt timestamp default current_timestamp,
 
     UNIQUE(userId, postId)
+);
+
+CREATE TABLE commentLikes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  userId INT NOT NULL
+		REFERENCES users(id) ON DELETE CASCADE,
+  commentId INT NOT NULL
+		REFERENCES comments(id) ON DELETE CASCADE,
+  createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE (userId, commentId)
 );
 
 CREATE TABLE messages (

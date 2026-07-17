@@ -8,7 +8,7 @@ export default function Home() {
         const token = localStorage.getItem("token");
 
         if (!token) {
-            navigate("/login");
+            navigate("/auth");
         }
         else {
             navigate("/feed");

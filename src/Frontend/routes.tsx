@@ -9,7 +9,7 @@ function RoutesApp() {
     <BrowserRouter>
       <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Authentication />} />
+          <Route path="/auth" element={<Authentication />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/profile/:id" element={<Profile />} />
 

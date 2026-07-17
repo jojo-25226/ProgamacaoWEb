@@ -10,12 +10,12 @@ function formatPost(row) {
             ? `http://localhost:5000/uploads/${row.image}`
             : null,
         createdAt: row.createdAt,
-        userId: row.userId,
         author: {
             id: row.userId,
             name: row.username,
             avatar: row.pfp,
         },
+        visibility: row.visibility,
         likesCount: Number(row.likesCount ?? 0),
         commentsCount: Number(row.commentsCount ?? 0),
         likedByUser: Boolean(row.likedByUser),
@@ -26,22 +26,25 @@ export async function createPost(req, res) {
     try {
         const content = req.body.content?.trim() ?? "";
         const image = req.file?.filename ?? null;
+        const visibility =
+            req.body.visibility === "Friends" ? "Friends" : "Public";
 
-        if (!content && !image) {
+        if (!content) {
             return res.status(400).json({
-                message: "O post deve ter texto ou imagem",
+                message: "O post tem de conter texto",
             });
         }
 
         const [result] = await db.query(
-            "INSERT INTO posts (content, image, userId) VALUES (?, ?, ?)",
-            [content, image, req.userId]
+            "INSERT INTO posts (content, image, userId, visibility) VALUES (?, ?, ?, ?)",
+            [content, image, req.userId, visibility]
         );
 
         const [rows] = await db.query(`
             SELECT posts.id,
                    posts.content,
                    posts.image,
+                   posts.visibility,
                    posts.createdAt,
                    posts.userId,
                    users.username,
@@ -110,35 +113,52 @@ export async function getFeed(req, res) {
             SELECT posts.id,
                    posts.content,
                    posts.image,
+                   posts.visibility,
                    posts.createdAt,
                    posts.userId,
                    users.username,
                    users.pfp,
-                   (
-                    SELECT COUNT(*)
-                       FROM likes
-                       WHERE likes.postId = posts.id
-                   ) AS likesCount,
-
-                   (
-                       SELECT COUNT(*)
-                       FROM comments
-                       WHERE comments.postId = posts.id
-                   ) AS commentsCount,
-
-                   EXISTS(
-                       SELECT 1
-                       FROM likes
-                       WHERE likes.postId = posts.id
-                         AND likes.userId = ?
-                   ) AS likedByUser
+                   (SELECT COUNT(*)
+                    FROM likes
+                    WHERE likes.postId = posts.id)    AS likesCount,
+                   (SELECT COUNT(*)
+                    FROM comments
+                    WHERE comments.postId = posts.id) AS commentsCount,
+                   EXISTS(SELECT 1
+                          FROM likes
+                          WHERE likes.postId = posts.id
+                            AND likes.userId = ?)     AS likedByUser
             FROM posts
                      INNER JOIN users ON users.id = posts.userId
+            WHERE
+               -- O autor vê sempre os próprios posts
+                posts.userId = ?
+                
+               -- Posts públicos são visíveis para todos
+               OR posts.visibility = 'Public'
+                
+               -- Posts de amigos são visíveis apenas em amizades aceites
+               OR (
+                posts.visibility = 'Friends'
+                    AND EXISTS(SELECT 1
+                               FROM friendRequests
+                               WHERE status = 'Accepted'
+                                 AND (
+                                   (senderId = posts.userId AND receiverId = ?)
+                                       OR
+                                   (receiverId = posts.userId AND senderId = ?)
+                                   ))
+                )
             ORDER BY posts.createdAt DESC
-        `, [req.userId]);
+        `, [
+            req.userId, // likedByUser
+            req.userId, // posts próprios
+            req.userId, // amizade (utilizador atual como receiver)
+            req.userId, // amizade (utilizador atual como sender)
+        ]);
 
-        return res.json(rows.map((post) => formatPost(post, req.userId)));
+        return res.json(rows.map(formatPost));
     } catch (error) {
-        return res.status(500).json({message: error.message});
+        return res.status(500).json({ message: error.message });
     }
 }

@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import api from "../services/api";
 import PostCard from "../components/PostCard";
 import "./Profile.css";
+import NavBar from "../components/NavBar/index.jsx";
 
 const DEFAULT_AVATAR = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 const BASE_URL = "http://localhost:5000/uploads/";
@@ -14,6 +15,7 @@ function Profile() {
   const isMe = Number(id) === currentUser?.id;
 
   const [profile, setProfile] = useState(null);
+  const [profileVisibility, setProfileVisibility] = useState("Public");
   const [editingBio, setEditingBio] = useState(false);
   const [bio, setBio] = useState("");
   const [friendStatus, setFriendStatus] = useState(null); // null | "pending" | "friends"
@@ -24,6 +26,7 @@ function Profile() {
     try {
       const res = await api.get("/users/" + id + "/profile");
       setProfile(res.data);
+      setProfileVisibility(res.data.profileVisibility ?? "Public");
       setBio(res.data.bio ?? "");
     } catch (err) {
       console.error(err);
@@ -33,6 +36,21 @@ function Profile() {
               err.response?.data?.message ?? err.message
           }`
       );
+    }
+  }
+
+  async function handleProfileVisibilityChange(e) {
+    const newVisibility = e.target.value;
+    setProfileVisibility(newVisibility);
+
+    try {
+      await api.patch("/users/profile-visibility", {
+        profileVisibility: newVisibility,
+      });
+    } catch (err) {
+      console.error(err);
+      setProfileVisibility(profile?.profileVisibility ?? "Public");
+      alert("Nao foi possivel alterar a privacidade do perfil");
     }
   }
 
@@ -113,13 +131,7 @@ function Profile() {
 
   return (
     <div className="profile-page">
-      <header className="navbar">
-        <h1 className="logo" onClick={() => navigate("/feed")} style={{ cursor: "pointer" }}>Social Network</h1>
-        <div className="nav-icons">
-          <span onClick={() => navigate("/feed")}>🏠</span>
-          <span onClick={() => navigate("/profile/" + currentUser.id)}>👤</span>
-        </div>
-      </header>
+      <NavBar />
 
       <div className="profile-container">
         <div className="profile-cover">
@@ -152,6 +164,19 @@ function Profile() {
 
           <div className="profile-stats">
             <span><strong>{profile.postsCount ?? 0}</strong> posts</span>
+
+            {isMe && (
+                <label className="profile-privacy">
+                  Privacidade do perfil
+                  <select
+                      value={profileVisibility}
+                      onChange={handleProfileVisibilityChange}
+                  >
+                    <option value="Public">Público</option>
+                    <option value="Friends">Só amigos</option>
+                  </select>
+                </label>
+            )}
           </div>
 
           <div className="profile-bio">

@@ -1,5 +1,25 @@
 import {db} from "../config/db.js";
 
+async function canViewProfile(viewerId, profileUserId, visibility) {
+    if (viewerId === profileUserId || visibility === "Public") {
+        return true;
+    }
+
+    const [friendships] = await db.query(`
+    SELECT id
+    FROM friendRequests
+    WHERE status = 'Accepted'
+      AND (
+        (senderId = ? AND receiverId = ?)
+        OR
+        (senderId = ? AND receiverId = ?)
+      )
+    LIMIT 1
+  `, [viewerId, profileUserId, profileUserId, viewerId]);
+
+    return friendships.length > 0;
+}
+
 export async function getUserProfile(req, res) {
     try {
         const userId = Number(req.params.id);
@@ -8,13 +28,28 @@ export async function getUserProfile(req, res) {
             SELECT id,
                    username AS name,
                    pfp      AS avatar,
-                   bio
+                   bio,
+                   profileVisibility
             FROM users
             WHERE id = ?
         `, [userId]);
 
         if (users.length === 0) {
             return res.status(404).json({message: "Utilizador não encontrado"});
+        }
+
+        const profile = users[0];
+
+        // Verifica se o utilizador pode ver o perfil
+        const canView = await canViewProfile(
+            req.userId,
+            userId,
+            profile.profileVisibility
+        );
+        if (!canView) {
+            return res.status(403).json({
+                message: "Este perfil esta visivel apenas para amigos",
+            });
         }
 
         const [posts] = await db.query(`
@@ -43,8 +78,6 @@ export async function getUserProfile(req, res) {
             ORDER BY posts.createdAt DESC
         `, [req.userId, userId]);
 
-        const profile = users[0];
-
         return res.json({
             ...profile,
             postsCount: posts.length,
@@ -65,6 +98,27 @@ export async function getUserProfile(req, res) {
         });
     } catch (error) {
         return res.status(500).json({message: error.message});
+    }
+}
+
+export async function updateProfileVisibility(req, res) {
+    try {
+        const profileVisibility = req.body.profileVisibility;
+
+        if (!["Public", "Friends"].includes(profileVisibility)) {
+            return res.status(400).json({
+                message: "A visibilidade deve ser Public ou Friends",
+            });
+        }
+
+        await db.query(
+            "UPDATE users SET profileVisibility = ? WHERE id = ?",
+            [profileVisibility, req.userId]
+        );
+
+        return res.json({ profileVisibility });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
     }
 }
 
