@@ -8,25 +8,23 @@ const BASE = "http://localhost:5000/uploads/";
 function PostCard({post, currentUserId, onDelete}) {
     const author = post.author ?? post.user;
 
-    // BUG FIX: estado local de like — NÃO chama loadPosts após like,
-    // isso causava o like a desaparecer porque o servidor devolvia dados antigos
-    const [liked, setLiked] = useState(
-        post.likedByUser ?? post.likes?.some((l) => l.userId === currentUserId) ?? false
-    );
-    const [likesCount, setLikesCount] = useState(
-        post.likesCount ?? post.likes?.length ?? 0
-    );
+    // Likes
+    const [liked, setLiked] = useState(post.likedByUser
+        ?? post.likes?.some((l) => l.userId === currentUserId) ?? false);
+    const [likesCount, setLikesCount] = useState(post.likesCount ?? post.likes?.length ?? 0);
+    const [likeLoading, setLikeLoading] = useState(false);
+
+    // Comentários
     const [showComments, setShowComments] = useState(false);
     const [comments, setComments] = useState(post.comments ?? []);
     const [commentText, setCommentText] = useState("");
-    const [likeLoading, setLikeLoading] = useState(false);
     const [commentLikeLoading, setCommentLikeLoading] = useState({});
 
+    // Alterna o like no post
     async function handleLike() {
         if (likeLoading) return;
         setLikeLoading(true);
 
-        // Atualiza UI imediatamente (optimistic)
         const wasLiked = liked;
         setLiked(!wasLiked);
         setLikesCount((c) => (wasLiked ? c - 1 : c + 1));
@@ -45,6 +43,7 @@ function PostCard({post, currentUserId, onDelete}) {
         }
     }
 
+    // Envia um comentário para o post
     async function handleComment(e) {
         e.preventDefault();
         if (!commentText.trim()) return;
@@ -57,6 +56,7 @@ function PostCard({post, currentUserId, onDelete}) {
         }
     }
 
+    // Alterna o like no comentário
     async function handleCommentLike(comment) {
         if (commentLikeLoading[comment.id]) return;
 
@@ -119,6 +119,7 @@ function PostCard({post, currentUserId, onDelete}) {
         }
     }
 
+    // Abre ou fecha os comentários
     async function toggleComments() {
         const willShow = !showComments;
         setShowComments(willShow);
@@ -133,12 +134,15 @@ function PostCard({post, currentUserId, onDelete}) {
         }
     }
 
+    // Copia o link para a àrea de transferência
     function handleShare() {
         const url = window.location.origin + "/feed";
         navigator.clipboard?.writeText(url).then(() => alert("Link copiado!")).catch(() => alert("Não foi possível copiar."));
     }
 
+    // Apaga o post
     async function handleDelete() {
+        // Pede confirmação
         if (!window.confirm("Tens a certeza que queres apagar este post?")) return;
         try {
             await api.delete("/posts/" + post.id);

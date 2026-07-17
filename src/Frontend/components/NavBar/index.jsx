@@ -10,6 +10,8 @@ const BASE = "http://localhost:5000/uploads/";
 function NavBar() {
     const navigate = useNavigate();
     const currentUser = JSON.parse(localStorage.getItem("user"));
+
+    // Amigos
     const [friends, setFriends] = useState([]);
 
     // Pesquisa
@@ -23,7 +25,7 @@ function NavBar() {
     const [showRequests, setShowRequests] = useState(false);
     const requestsRef = useRef(null);
 
-    // Chat — ícone na navbar abre painel de amigos para escolher
+    // Chat
     const [chatFriend, setChatFriend] = useState(null);
     const [showChatPanel, setShowChatPanel] = useState(false);
     const chatPanelRef = useRef(null);
@@ -43,6 +45,7 @@ function NavBar() {
         return () => document.removeEventListener("mousedown", handleOutsideClick);
     }, []);
 
+    // Vai buscar a lista de amigos
     async function loadFriends() {
         try {
             const res = await api.get("/friends/list");
@@ -55,6 +58,7 @@ function NavBar() {
         }
     }
 
+    // Vai buscar os pedidos de amizade
     async function loadReceivedRequests() {
         try {
             const res = await api.get("/friends/received");
@@ -64,29 +68,33 @@ function NavBar() {
         }
     }
 
+    // Aceita um pedido de amizade
     async function handleAccept(requestId) {
         try {
             await api.patch("/friends/accept/" + requestId);
 
             setReceivedRequests((prev) => prev.filter((request) => request.id !== requestId));
 
-            // A pessoa aceite passa a poder aparecer no chat.
+            // Atualiza a lista de amigos
             loadFriends();
         } catch (err) {
             console.error(err);
         }
     }
 
+    // Rejeita um pedido de amizade
     async function handleReject(requestId) {
         try {
             await api.patch("/friends/reject/" + requestId);
 
+            // Atualiza a lista de pedidos de amizade
             setReceivedRequests((prev) => prev.filter((request) => request.id !== requestId));
         } catch (err) {
             console.error(err);
         }
     }
 
+    // Pesquisa utilizadores
     async function handleSearch(e) {
         const query = e.target.value;
         setSearchQuery(query);
@@ -109,6 +117,7 @@ function NavBar() {
         }
     }
 
+    // Envia um pedido de amizade ao utilizador selecionado
     async function handleAddFriend(userId) {
         try {
             await api.post("/friends/request", {receiverId: userId});
@@ -122,11 +131,13 @@ function NavBar() {
         }
     }
 
+    // Termina a sessão
     function handleLogout() {
         localStorage.clear();
         navigate("/");
     }
 
+    // Abre a janela de chat
     function openChat(friend) {
         setChatFriend(friend);
         setShowChatPanel(false);
@@ -194,9 +205,7 @@ function NavBar() {
                                 setShowRequests(false);
                             }}
                             title="Mensagens"
-                        >
-                          💬
-                        </span>
+                        >💬</span>
 
                     {showChatPanel && (<div className="nav-dropdown chat-panel">
                         <h4>Mensagens</h4>
@@ -230,15 +239,15 @@ function NavBar() {
                         title="Pedidos de amizade"
                     >👥
                         {receivedRequests.length > 0 && (<span className="badge red">
-                          {receivedRequests.length}
+                            {receivedRequests.length}
                         </span>)}
                     </span>
 
                     {showRequests && (<div className="nav-dropdown">
                         <h4>Pedidos de amizade</h4>
 
-                        {receivedRequests.length === 0 ? (<p className="dropdown-empty">Sem pedidos
-                            pendentes.</p>) : (receivedRequests.map((request) => (
+                        {receivedRequests.length === 0 ? (<p className="dropdown-empty">Sem pedidos pendentes.</p>)
+                            : (receivedRequests.map((request) => (
                             <div className="request-item" key={request.id}>
                                 <img
                                     src={request.sender?.avatar ? BASE + request.sender.avatar : DEFAULT_AVATAR}
@@ -256,13 +265,15 @@ function NavBar() {
                                 <button
                                     className="btn-accept"
                                     onClick={() => handleAccept(request.id)}
-                                >✓
+                                >
+                                    ✓
                                 </button>
 
                                 <button
                                     className="btn-reject"
                                     onClick={() => handleReject(request.id)}
-                                >✕
+                                >
+                                    ✕
                                 </button>
                             </div>)))}
                     </div>)}

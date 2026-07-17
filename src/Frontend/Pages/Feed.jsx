@@ -20,15 +20,18 @@ function Feed() {
     const [visibility, setVisibility] = useState("Public");
 
     useEffect(() => {
+        // Impede o acesso ao feed sem sessão iniciada
         if (!currentUser || !localStorage.getItem("token")) {
             navigate("/");
             return;
         }
 
+        // Carrega os amigos e posts
         loadPosts();
         loadFriends();
     }, []);
 
+    // Vai buscar os posts visíveis para o utilizador
     async function loadPosts() {
         try {
             const res = await api.get("/posts/feed");
@@ -37,7 +40,7 @@ function Feed() {
             console.error(err);
         }
     }
-
+    // Vai buscar os amigos para mostrar
     async function loadFriends() {
         try {
             const res = await api.get("/friends/list");
@@ -50,10 +53,11 @@ function Feed() {
         }
     }
 
+    // Envia um novo post
     async function handleCreatePost(e) {
         e.preventDefault();
 
-        // Não deixa publicar posts sem mensagem.
+        // Não deixa publicar posts sem mensagem
         if (!content.trim()) return;
 
         try {
@@ -61,23 +65,30 @@ function Feed() {
             formData.append("content", content);
             if (image) formData.append("image", image);
             formData.append("visibility", visibility);
+
             await api.post("/posts", formData);
+
+            // Limpa o formulário
             setContent("");
             setImage(null);
             setImagePreview(null);
             setVisibility("Public");
+
+            // Atualiza o feed
             loadPosts();
         } catch (err) {
             console.error(err);
         }
     }
 
+    // Guarda a imagem escolhida e cria uma pré-visualização
     function handleImageChange(e) {
         const file = e.target.files[0];
         setImage(file);
         setImagePreview(file ? URL.createObjectURL(file) : null);
     }
 
+    // Remove o post apagado do estado
     function handleDeletePost(postId) {
         setPosts((p) => p.filter((post) => post.id !== postId));
     }
@@ -163,6 +174,7 @@ function Feed() {
                                     <button
                                         type="submit"
                                         className="btn-publish"
+                                        /* Bloqueado se não houver mensagem */
                                         disabled={!content.trim()}
                                     >
                                         Publicar
